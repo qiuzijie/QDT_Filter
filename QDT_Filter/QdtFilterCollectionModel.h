@@ -7,9 +7,11 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "QdtFilterBaseModel.h"
 
 @interface QdtFilterCollectionModel : NSObject
 @property (nonatomic, copy) NSString *title;
 @property (nonatomic, copy) NSString *content;
-- (instancetype)initWithTitle:(NSString *)title Content:(NSString *)content;
+@property (nonatomic, strong) QdtFilterBaseModel *selectedModel;
+- (instancetype)initWithTitle:(NSString *)title content:(NSString *)content selectedModel:(QdtFilterBaseModel *)selectedModel;
 @end

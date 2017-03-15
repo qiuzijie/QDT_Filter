@@ -11,8 +11,8 @@
 #define FilterLeftTableCellIdentifier @"leftTCell"
 #define FilterRightTableCellIdentifier @"rightTCell"
 #define FilterCollectionCellIdentifier @"collectionCell"
-#define FilterLeftTableSelectingModel self.categorys[[self.leftTableView indexPathForSelectedRow].row]
-#define FilterRightTableSelectingModel self.categorys[[self.leftTableView indexPathForSelectedRow].row].secondaryCategorys[indexPath.row]
+#define FilterLeftTableSelectingModel self.categorys[self.leftSelectingIndexPath.row]
+#define FilterRightTableSelectingModel FilterLeftTableSelectingModel.secondaryCategorys[indexPath.row]
 
 @interface Qdt_Filter ()<UITableViewDelegate,
                          UITableViewDataSource,
@@ -25,8 +25,8 @@
 @property (weak, nonatomic) IBOutlet UIView *bottomView;
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *collectionViewTopConstraint;
 
-@property (nonatomic, strong)QdtFilterBaseModel *selectedSingleModel;
-
+@property (nonatomic, strong) QdtFilterBaseModel *selectedSingleModel;
+@property (nonatomic, strong) NSIndexPath *leftSelectingIndexPath;
 @end
 
 @implementation Qdt_Filter
@@ -41,7 +41,7 @@
     self.leftTableView.tableFooterView = [UIView new];
     self.rightTableView.tableFooterView = [UIView new];
     self.leftTableView.separatorStyle = UITableViewCellSeparatorStyleNone;
-    self.rightTableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+//    self.rightTableView.separatorStyle = UITableViewCellSeparatorStyleNone;
     
     UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc] init];
     layout.scrollDirection = UICollectionViewScrollDirectionHorizontal;
@@ -58,17 +58,28 @@
     _categorys = categorys;
     [self.leftTableView reloadData];
     [self.leftTableView selectRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0] animated:NO scrollPosition:UITableViewScrollPositionNone];
+    self.leftSelectingIndexPath = [NSIndexPath indexPathForRow:0 inSection:0];
     [self.rightTableView reloadData];
 }
 
 #pragma mark- tableview Delegate
 
+- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView{
+    if (tableView == self.rightTableView) {
+        return 2;
+    }
+    return 1;
+}
+
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
     if (tableView == self.leftTableView) {
         return self.categorys.count;
     } else{
-        NSIndexPath *index = [[self.leftTableView indexPathsForSelectedRows] firstObject];
-        return self.categorys[index.row].secondaryCategorys.count;
+        if (section == 0) {
+            return 1;
+        }else{
+            return FilterLeftTableSelectingModel.secondaryCategorys.count;
+        }
     }
 
 }
@@ -81,14 +92,17 @@
         leftSelectView.backgroundColor = [UIColor colorWithRed:235.0/255 green:235.0/255 blue:235.0/255 alpha:1];
         leftCell.selectedBackgroundView = leftSelectView;
         leftCell.textLabel.text = self.categorys[indexPath.row].mainCategory.Name;
+        
+        leftCell.accessoryView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"customerfilter_dot.png"]];
+        
+        ((UIImageView *)leftCell.accessoryView).hidden = !self.categorys[indexPath.row].mainCategory.selected;
         return leftCell;
         
     } else{
         
         UITableViewCell *rightCell = [tableView dequeueReusableCellWithIdentifier:FilterRightTableCellIdentifier forIndexPath:indexPath];
         rightCell.backgroundColor = [UIColor colorWithRed:235.0/255 green:235.0/255 blue:235.0/255 alpha:1];
-        
-        if (FilterLeftTableSelectingModel.allowsMultipleSelection == YES) {
+        if (self.categorys[self.leftSelectingIndexPath.row].allowsMultipleSelection == YES) {
             rightCell.accessoryView = [[UIImageView alloc] initWithImage:
                                        [UIImage imageNamed:@"customerfilter_muti_unchecked.png"]
                                                         highlightedImage:
@@ -98,68 +112,92 @@
                                        nil highlightedImage:
                                        [UIImage imageNamed:@"customerfilter_single_checked.png"]];
         }
-
-        rightCell.textLabel.text = FilterRightTableSelectingModel.Name;
         
-        if (FilterRightTableSelectingModel.selected == YES) {
-            ((UIImageView *)rightCell.accessoryView).highlighted = YES;
+        if (indexPath.section == 0) {
+            rightCell.textLabel.text = @"不限";
+            bool b = !self.categorys[self.leftSelectingIndexPath.row].mainCategory.selected;
+            ((UIImageView *)rightCell.accessoryView).highlighted = b;
+            return rightCell;
         } else{
-            ((UIImageView *)rightCell.accessoryView).highlighted = NO;
+            rightCell.textLabel.text = FilterRightTableSelectingModel.Name;
+            ((UIImageView *)rightCell.accessoryView).highlighted = FilterRightTableSelectingModel.selected;
+            return rightCell;
         }
-        
-        
-        return rightCell;
-    
     }
     
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     if (tableView == self.leftTableView) {
+        self.leftSelectingIndexPath = indexPath;
         //刷新右边列表
         [self.rightTableView reloadData];
         
     } else{
-        //刷新打钩状态和collection
-        
-        NSString *title = FilterLeftTableSelectingModel.mainCategory.Name;
-        NSString *content = FilterRightTableSelectingModel.Name;
-        QdtFilterCollectionModel *collect = [[QdtFilterCollectionModel alloc] initWithTitle:title Content:content];
-        
-        if (FilterLeftTableSelectingModel.allowsMultipleSelection == YES) {//多选
+        if (indexPath.section == 0) {// 不限
+            FilterLeftTableSelectingModel.mainCategory.selected = NO;
+            [self reloadLeftTableView];
             
-            FilterRightTableSelectingModel.selected = !FilterRightTableSelectingModel.selected;
-            [self.rightTableView reloadData];
-            
-            for (QdtFilterCollectionModel *cModel in self.collects) {
-                if ([cModel.title isEqualToString:title] && [cModel.content isEqualToString:content]) {
-                    [self.collects removeObject:cModel];
-                    [self reloadCollectionView];
-                    return;
-                }
+            NSMutableArray *newArr = [NSMutableArray arrayWithArray:self.collects];
+            for (QdtFilterCollectionModel *c in self.collects) {
+                if ([c.title isEqualToString:FilterLeftTableSelectingModel.mainCategory.Name]) {
+                    [newArr removeObject:c];
+                };
             }
-            [self.collects addObject:collect];
+            self.collects = newArr;
             [self reloadCollectionView];
             
-        } else{//单选
-            
-            for (QdtFilterBaseModel *model in FilterLeftTableSelectingModel.secondaryCategorys) {
-                model.selected = NO;
+            for (QdtFilterBaseModel *m in FilterLeftTableSelectingModel.secondaryCategorys) {
+                m.selected = NO;
             }
-            FilterRightTableSelectingModel.selected = YES;
             [self.rightTableView reloadData];
             
-            //判断是否添加到collection,刷新
-            for (NSInteger i = 0; i < self.collects.count; i ++) {
-                if ([self.collects[i].title isEqualToString:title]) {
-                    self.collects[i] = collect;
-                    [self reloadCollectionView];
-                    return;
-                }
-            }
+        } else{
+            //刷新打钩状态和collection
             
-            [self.collects addObject:collect];
-            [self reloadCollectionView];
+            NSString *title = FilterLeftTableSelectingModel.mainCategory.Name;
+            NSString *content = FilterRightTableSelectingModel.Name;
+            QdtFilterCollectionModel *collect = [[QdtFilterCollectionModel alloc] initWithTitle:title content:content selectedModel:FilterRightTableSelectingModel];
+            
+            if (FilterLeftTableSelectingModel.allowsMultipleSelection == YES) {//多选
+                
+                FilterRightTableSelectingModel.selected = !FilterRightTableSelectingModel.selected;
+                [self.rightTableView reloadData];
+                FilterLeftTableSelectingModel.mainCategory.selected = [self checkRightTableSelectState:FilterLeftTableSelectingModel.secondaryCategorys];
+                [self reloadLeftTableView];
+                
+                for (QdtFilterCollectionModel *cModel in self.collects) {
+                    if ([cModel.title isEqualToString:title] && [cModel.content isEqualToString:content]) {
+                        [self.collects removeObject:cModel];
+                        [self reloadCollectionView];
+                        return;
+                    }
+                }
+                [self.collects addObject:collect];
+                [self reloadCollectionView];
+                
+            } else{//单选
+                
+                for (QdtFilterBaseModel *model in FilterLeftTableSelectingModel.secondaryCategorys) {
+                    model.selected = NO;
+                }
+                FilterRightTableSelectingModel.selected = YES;
+                [self.rightTableView reloadData];
+                FilterLeftTableSelectingModel.mainCategory.selected = YES;
+                [self reloadLeftTableView];
+                
+                //判断是否添加到collection,刷新
+                for (NSInteger i = 0; i < self.collects.count; i ++) {
+                    if ([self.collects[i].title isEqualToString:title]) {
+                        self.collects[i] = collect;
+                        [self reloadCollectionView];
+                        return;
+                    }
+                }
+                
+                [self.collects addObject:collect];
+                [self reloadCollectionView];
+            }
         }
     }
 }
@@ -184,9 +222,19 @@
 }
 
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
+    //清除打钩状态
+    self.collects[indexPath.row].selectedModel.selected = NO;
+    for (QdtFilterCategory *category in self.categorys) {
+        if ([category.mainCategory.Name isEqualToString:self.collects[indexPath.row].title]) {
+            category.mainCategory.selected = [self checkRightTableSelectState:category.secondaryCategorys];
+        }
+    }
+    [self reloadLeftTableView];
+    [self.rightTableView reloadData];
     //移除
     [self.collects removeObjectAtIndex:indexPath.row];
     [self reloadCollectionView];
+    
 }
 
 #pragma mark- function
@@ -209,6 +257,21 @@
     if (self.collects.count >3) {
         [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForRow:(self.collects.count - 1) inSection:0] atScrollPosition:UICollectionViewScrollPositionRight animated:YES];
     }
+}
+
+- (void)reloadLeftTableView{
+    [self.leftTableView reloadData];
+    [self.leftTableView selectRowAtIndexPath:self.leftSelectingIndexPath animated:NO scrollPosition:UITableViewScrollPositionNone];
+    [self.leftTableView scrollToRowAtIndexPath:self.leftSelectingIndexPath atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
+}
+
+- (BOOL)checkRightTableSelectState:(NSArray<QdtFilterBaseModel *> *)secondaryCategorys{
+    for (QdtFilterBaseModel *model in secondaryCategorys) {
+        if (model.selected == YES) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 

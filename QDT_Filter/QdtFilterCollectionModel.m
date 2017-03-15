@@ -9,12 +9,13 @@
 #import "QdtFilterCollectionModel.h"
 
 @implementation QdtFilterCollectionModel
-- (instancetype)initWithTitle:(NSString *)title Content:(NSString *)content
+- (instancetype)initWithTitle:(NSString *)title content:(NSString *)content selectedModel:(QdtFilterBaseModel *)selectedModel
 {
     self = [super init];
     if (self) {
         self.title = title;
         self.content = content;
+        self.selectedModel = selectedModel;
     }
     return self;
 }
