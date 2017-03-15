@@ -21,27 +21,26 @@
     [super viewDidLoad];
     self.category = [self creatDatas];
     self.filter = [Qdt_Filter new];
-    self.filter.categorys = self.category;
     self.filter.view.frame = CGRectMake(0, 24, CGRectGetWidth(self.view.frame), CGRectGetHeight(self.view.frame)/2);
     [self.view addSubview:self.filter.view];
-
+    self.filter.categorys = self.category;
 }
 
-- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event{
-    
-}
 
 - (NSArray *)creatDatas{
     NSMutableArray *arry = [NSMutableArray new];
     for (NSInteger i = 0; i < 10; i++) {
         QdtFilterCategory *category = [QdtFilterCategory new];
-        QdtFilterCommonModel *m = [QdtFilterCommonModel new];
+        QdtFilterBaseModel *m = [QdtFilterBaseModel new];
         m.Name = [NSString stringWithFormat:@"main___%ld",i];
         category.mainCategory = m;
+        if (i%2 == 0) {
+            category.allowsMultipleSelection = YES;
+        }
     
         NSMutableArray *arry2 = [NSMutableArray new];
         for (NSInteger j = 0; j < random()%20 + 1; j++) {
-            QdtFilterCommonModel *model = [QdtFilterCommonModel new];
+            QdtFilterBaseModel *model = [QdtFilterBaseModel new];
             model.Name = [NSString stringWithFormat:@"%ld___%ld",i,j];
             [arry2 addObject:model];
         }

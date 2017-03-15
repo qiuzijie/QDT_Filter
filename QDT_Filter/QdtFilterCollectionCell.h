@@ -7,7 +7,8 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "QdtFilterCollectionModel.h"
 
 @interface QdtFilterCollectionCell : UICollectionViewCell
-
+@property (nonatomic, strong) QdtFilterCollectionModel *collectModel;
 @end

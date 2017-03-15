@@ -11,15 +11,21 @@
 #define FilterLeftTableCellIdentifier @"leftTCell"
 #define FilterRightTableCellIdentifier @"rightTCell"
 #define FilterCollectionCellIdentifier @"collectionCell"
+#define FilterLeftTableSelectingModel self.categorys[[self.leftTableView indexPathForSelectedRow].row]
+#define FilterRightTableSelectingModel self.categorys[[self.leftTableView indexPathForSelectedRow].row].secondaryCategorys[indexPath.row]
 
 @interface Qdt_Filter ()<UITableViewDelegate,
                          UITableViewDataSource,
                          UICollectionViewDelegate,
                          UICollectionViewDataSource>
+
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
 @property (weak, nonatomic) IBOutlet UITableView *leftTableView;
 @property (weak, nonatomic) IBOutlet UITableView *rightTableView;
 @property (weak, nonatomic) IBOutlet UIView *bottomView;
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *collectionViewTopConstraint;
+
+@property (nonatomic, strong)QdtFilterBaseModel *selectedSingleModel;
 
 @end
 
@@ -27,11 +33,15 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    
+    self.collects = [NSMutableArray array];
+    
     [self.leftTableView registerClass:[UITableViewCell class] forCellReuseIdentifier:FilterLeftTableCellIdentifier];
     [self.rightTableView registerClass:[UITableViewCell class] forCellReuseIdentifier:FilterRightTableCellIdentifier];
     self.leftTableView.tableFooterView = [UIView new];
     self.rightTableView.tableFooterView = [UIView new];
-    [self.leftTableView selectRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0] animated:NO scrollPosition:UITableViewScrollPositionNone];
+    self.leftTableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+    self.rightTableView.separatorStyle = UITableViewCellSeparatorStyleNone;
     
     UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc] init];
     layout.scrollDirection = UICollectionViewScrollDirectionHorizontal;
@@ -43,6 +53,15 @@
     [self.collectionView registerClass:[QdtFilterCollectionCell class] forCellWithReuseIdentifier:FilterCollectionCellIdentifier];
     
 }
+
+- (void)setCategorys:(NSArray<QdtFilterCategory *> *)categorys{
+    _categorys = categorys;
+    [self.leftTableView reloadData];
+    [self.leftTableView selectRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0] animated:NO scrollPosition:UITableViewScrollPositionNone];
+    [self.rightTableView reloadData];
+}
+
+#pragma mark- tableview Delegate
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
     if (tableView == self.leftTableView) {
@@ -58,14 +77,37 @@
     if (tableView == self.leftTableView) {
         
         UITableViewCell *leftCell = [tableView dequeueReusableCellWithIdentifier:FilterLeftTableCellIdentifier forIndexPath:indexPath];
+        UIView *leftSelectView = [UIView new];
+        leftSelectView.backgroundColor = [UIColor colorWithRed:235.0/255 green:235.0/255 blue:235.0/255 alpha:1];
+        leftCell.selectedBackgroundView = leftSelectView;
         leftCell.textLabel.text = self.categorys[indexPath.row].mainCategory.Name;
         return leftCell;
         
     } else{
         
         UITableViewCell *rightCell = [tableView dequeueReusableCellWithIdentifier:FilterRightTableCellIdentifier forIndexPath:indexPath];
-        NSIndexPath *index = [[self.leftTableView indexPathsForSelectedRows] firstObject];
-        rightCell.textLabel.text = self.categorys[index.row].secondaryCategorys[indexPath.row].Name;
+        rightCell.backgroundColor = [UIColor colorWithRed:235.0/255 green:235.0/255 blue:235.0/255 alpha:1];
+        
+        if (FilterLeftTableSelectingModel.allowsMultipleSelection == YES) {
+            rightCell.accessoryView = [[UIImageView alloc] initWithImage:
+                                       [UIImage imageNamed:@"customerfilter_muti_unchecked.png"]
+                                                        highlightedImage:
+                                       [UIImage imageNamed:@"customerfilter_multi_checked.png"]];
+        } else{
+            rightCell.accessoryView = [[UIImageView alloc] initWithImage:
+                                       nil highlightedImage:
+                                       [UIImage imageNamed:@"customerfilter_single_checked.png"]];
+        }
+
+        rightCell.textLabel.text = FilterRightTableSelectingModel.Name;
+        
+        if (FilterRightTableSelectingModel.selected == YES) {
+            ((UIImageView *)rightCell.accessoryView).highlighted = YES;
+        } else{
+            ((UIImageView *)rightCell.accessoryView).highlighted = NO;
+        }
+        
+        
         return rightCell;
     
     }
@@ -74,12 +116,55 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     if (tableView == self.leftTableView) {
+        //刷新右边列表
         [self.rightTableView reloadData];
-    } else{
         
+    } else{
+        //刷新打钩状态和collection
+        
+        NSString *title = FilterLeftTableSelectingModel.mainCategory.Name;
+        NSString *content = FilterRightTableSelectingModel.Name;
+        QdtFilterCollectionModel *collect = [[QdtFilterCollectionModel alloc] initWithTitle:title Content:content];
+        
+        if (FilterLeftTableSelectingModel.allowsMultipleSelection == YES) {//多选
+            
+            FilterRightTableSelectingModel.selected = !FilterRightTableSelectingModel.selected;
+            [self.rightTableView reloadData];
+            
+            for (QdtFilterCollectionModel *cModel in self.collects) {
+                if ([cModel.title isEqualToString:title] && [cModel.content isEqualToString:content]) {
+                    [self.collects removeObject:cModel];
+                    [self reloadCollectionView];
+                    return;
+                }
+            }
+            [self.collects addObject:collect];
+            [self reloadCollectionView];
+            
+        } else{//单选
+            
+            for (QdtFilterBaseModel *model in FilterLeftTableSelectingModel.secondaryCategorys) {
+                model.selected = NO;
+            }
+            FilterRightTableSelectingModel.selected = YES;
+            [self.rightTableView reloadData];
+            
+            //判断是否添加到collection,刷新
+            for (NSInteger i = 0; i < self.collects.count; i ++) {
+                if ([self.collects[i].title isEqualToString:title]) {
+                    self.collects[i] = collect;
+                    [self reloadCollectionView];
+                    return;
+                }
+            }
+            
+            [self.collects addObject:collect];
+            [self reloadCollectionView];
+        }
     }
 }
 
+#pragma mark- collection Delegate
 
 -(NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView{
     return 1;
@@ -87,14 +172,43 @@
 
 -(NSInteger)collectionView:(UICollectionView *)collectionView
     numberOfItemsInSection:(NSInteger)section{
-    return 10;
+    return self.collects.count;
 }
 
 -(UICollectionViewCell*)collectionView:(UICollectionView *)collectionView
                 cellForItemAtIndexPath:(NSIndexPath *)indexPath{
     QdtFilterCollectionCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:FilterCollectionCellIdentifier forIndexPath:indexPath];
-    cell.backgroundColor = [UIColor orangeColor];
+
+    cell.collectModel = self.collects[indexPath.row];
     return cell;
+}
+
+- (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath{
+    //移除
+    [self.collects removeObjectAtIndex:indexPath.row];
+    [self reloadCollectionView];
+}
+
+#pragma mark- function
+- (void)reloadCollectionView{
+    //判断是否显示collectionView
+    NSInteger constant = 0;
+    if (self.collects.count > 0) {
+        constant = 0;
+    } else{
+        constant = -60;
+    }
+    if (self.collectionViewTopConstraint.constant != constant) {
+        self.collectionViewTopConstraint.constant = constant;
+        [UIView animateWithDuration:0.5 animations:^{
+            [self.view layoutIfNeeded];
+        }];
+    }
+    
+    [self.collectionView reloadData];
+    if (self.collects.count >3) {
+        [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForRow:(self.collects.count - 1) inSection:0] atScrollPosition:UICollectionViewScrollPositionRight animated:YES];
+    }
 }
 
 

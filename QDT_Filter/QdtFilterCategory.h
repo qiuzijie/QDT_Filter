@@ -7,10 +7,11 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "QdtFilterCommonModel.h"
+#import "QdtFilterBaseModel.h"
 @interface QdtFilterCategory : NSObject
 
-@property (nonatomic, strong) QdtFilterCommonModel *mainCategory;
-@property (nonatomic, copy  ) NSArray<QdtFilterCommonModel *> *secondaryCategorys;
+@property (nonatomic, strong) QdtFilterBaseModel *mainCategory;
+@property (nonatomic, copy  ) NSArray<QdtFilterBaseModel *> *secondaryCategorys;
+@property (nonatomic, assign) BOOL allowsMultipleSelection;
 
 @end

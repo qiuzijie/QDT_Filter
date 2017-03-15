@@ -6,8 +6,8 @@
 //  Copyright © 2017年 qiuzijie. All rights reserved.
 //
 
-#import "QdtFilterCommonModel.h"
+#import "QdtFilterBaseModel.h"
 
-@implementation QdtFilterCommonModel
+@implementation QdtFilterBaseModel
 
 @end
