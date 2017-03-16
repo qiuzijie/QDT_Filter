@@ -26,6 +26,7 @@
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *collectionViewTopConstraint;
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *filterHeightConstraint;
 @property (strong, nonatomic) IBOutlet UIView *filterView;
+@property (weak, nonatomic) IBOutlet UIView *rightLodingView;
 @property (nonatomic, assign) BOOL fliterHasHidden;
 
 @property (nonatomic, strong) QdtFilterBaseModel *selectedSingleModel;
@@ -54,26 +55,23 @@
     layout.sectionInset = UIEdgeInsetsMake(0, 8, 0, 8);
     [self.collectionView setCollectionViewLayout:layout];
     [self.collectionView registerClass:[QdtFilterCollectionCell class] forCellWithReuseIdentifier:FilterCollectionCellIdentifier];
+    
+    self.filterHeightConstraint.constant = self.filterFrame.size.height;
+    self.view.frame = CGRectZero;
+    
+    [self.leftTableView reloadData];
+    [self.leftTableView selectRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0] animated:NO scrollPosition:UITableViewScrollPositionNone];
+    self.leftSelectingIndexPath = [NSIndexPath indexPathForRow:0 inSection:0];
+    [self reloadRightTableView];
 }
 
-- (instancetype)initFilterWithCategorys:(NSArray<QdtFilterCategory *> *)categorys filterFrame:(CGRect)frame
-{
+- (instancetype)initFilterWithCategorys:(NSArray<QdtFilterCategory *> *)categorys filterFrame:(CGRect)frame;{
     self = [super init];
     if (self) {
         self.categorys = categorys;
         self.filterFrame = frame;
-        [self initViews];
     }
     return self;
-}
-
-- (void)initViews{
-    [self.leftTableView reloadData];
-    [self.leftTableView selectRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0] animated:NO scrollPosition:UITableViewScrollPositionNone];
-    self.leftSelectingIndexPath = [NSIndexPath indexPathForRow:0 inSection:0];
-    [self.rightTableView reloadData];
-    self.filterHeightConstraint.constant = self.filterFrame.size.height;
-    self.view.frame = CGRectZero;
 }
 
 //- (void)setCategorys:(NSArray<QdtFilterCategory *> *)categorys{
@@ -153,7 +151,22 @@
     if (tableView == self.leftTableView) {
         self.leftSelectingIndexPath = indexPath;
         //刷新右边列表
-        [self.rightTableView reloadData];
+        if (self.categorys[indexPath.row].secondaryCategorys.count > 0) {
+            
+            [self reloadRightTableView];
+            
+            } else{
+                [self reloadRightTableView];//显示白板
+                //等待
+                
+                if (self.delegate && [self.delegate respondsToSelector:@selector(filter:category:getSecondarys:)]) {
+                    [self.delegate filter:self category:self.categorys[indexPath.row] getSecondarys:^(void) {
+                        //结束等待
+                        
+                        [self reloadRightTableView];
+                    }];
+                }
+        }
         
     } else{
         if (indexPath.section == 0) {// 不限
@@ -311,6 +324,15 @@
     [self.leftTableView reloadData];
     [self.leftTableView selectRowAtIndexPath:self.leftSelectingIndexPath animated:NO scrollPosition:UITableViewScrollPositionNone];
     [self.leftTableView scrollToRowAtIndexPath:self.leftSelectingIndexPath atScrollPosition:UITableViewScrollPositionMiddle animated:YES];
+}
+
+- (void)reloadRightTableView{
+    if (self.categorys[self.leftSelectingIndexPath.row].secondaryCategorys.count > 0) {
+        self.rightLodingView.hidden = YES;
+    } else {
+        self.rightLodingView.hidden = NO;
+    }
+    [self.rightTableView reloadData];
 }
 
 - (BOOL)checkRightTableSelectState:(NSArray<QdtFilterBaseModel *> *)secondaryCategorys{

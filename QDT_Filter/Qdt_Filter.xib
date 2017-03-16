@@ -17,6 +17,7 @@
                 <outlet property="filterHeightConstraint" destination="J6X-w9-f2b" id="xVg-JC-Ckq"/>
                 <outlet property="filterView" destination="PDW-od-nCo" id="IXR-l5-bb8"/>
                 <outlet property="leftTableView" destination="YsL-XN-May" id="T0o-g4-c0l"/>
+                <outlet property="rightLodingView" destination="n1H-ZV-4y5" id="OS2-Qx-5uj"/>
                 <outlet property="rightTableView" destination="NVe-2q-wg3" id="82s-Cy-8Bf"/>
                 <outlet property="view" destination="PDW-od-nCo" id="VuJ-Zs-Z6R"/>
             </connections>
@@ -121,12 +122,36 @@
                                 <outlet property="delegate" destination="-1" id="4Uh-Jg-nFE"/>
                             </connections>
                         </collectionView>
+                        <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="n1H-ZV-4y5">
+                            <rect key="frame" x="140" y="0.0" width="235" height="289.5"/>
+                            <subviews>
+                                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="正在加载请等待" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="3f8-wF-olc">
+                                    <rect key="frame" x="63.5" y="88" width="107.5" height="18"/>
+                                    <fontDescription key="fontDescription" type="system" pointSize="15"/>
+                                    <nil key="textColor"/>
+                                    <nil key="highlightedColor"/>
+                                </label>
+                                <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" hidesWhenStopped="YES" animating="YES" style="whiteLarge" translatesAutoresizingMaskIntoConstraints="NO" id="JmL-qA-BDL">
+                                    <rect key="frame" x="99" y="126" width="37" height="37"/>
+                                    <color key="color" red="0.0" green="0.47843137250000001" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                </activityIndicatorView>
+                            </subviews>
+                            <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                            <constraints>
+                                <constraint firstItem="JmL-qA-BDL" firstAttribute="centerX" secondItem="n1H-ZV-4y5" secondAttribute="centerX" id="gfa-FF-I1u"/>
+                                <constraint firstItem="JmL-qA-BDL" firstAttribute="centerY" secondItem="n1H-ZV-4y5" secondAttribute="centerY" id="nvL-TA-X8r"/>
+                                <constraint firstItem="JmL-qA-BDL" firstAttribute="top" secondItem="3f8-wF-olc" secondAttribute="bottom" constant="20" id="s31-qV-iBP"/>
+                                <constraint firstItem="3f8-wF-olc" firstAttribute="centerX" secondItem="n1H-ZV-4y5" secondAttribute="centerX" id="ztX-al-RIO"/>
+                            </constraints>
+                        </view>
                     </subviews>
                     <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                     <constraints>
                         <constraint firstAttribute="trailing" secondItem="V2n-ww-Frt" secondAttribute="trailing" id="4pC-Kw-bTs"/>
+                        <constraint firstItem="n1H-ZV-4y5" firstAttribute="centerY" secondItem="NVe-2q-wg3" secondAttribute="centerY" id="86u-yB-VY4"/>
                         <constraint firstItem="NVe-2q-wg3" firstAttribute="leading" secondItem="YsL-XN-May" secondAttribute="trailing" id="9TC-8n-p8V"/>
                         <constraint firstItem="9V3-pA-uBx" firstAttribute="leading" secondItem="0jS-mK-str" secondAttribute="leading" id="Ak3-u0-j1y"/>
+                        <constraint firstItem="n1H-ZV-4y5" firstAttribute="height" secondItem="NVe-2q-wg3" secondAttribute="height" id="Dag-N8-XLT"/>
                         <constraint firstItem="YsL-XN-May" firstAttribute="top" secondItem="9V3-pA-uBx" secondAttribute="bottom" id="G4n-yi-cav"/>
                         <constraint firstItem="V2n-ww-Frt" firstAttribute="top" secondItem="YsL-XN-May" secondAttribute="bottom" id="IIy-05-TNe"/>
                         <constraint firstAttribute="height" constant="333.5" id="J6X-w9-f2b"/>
@@ -138,6 +163,8 @@
                         <constraint firstItem="YsL-XN-May" firstAttribute="leading" secondItem="0jS-mK-str" secondAttribute="leading" id="YI1-zZ-T30"/>
                         <constraint firstAttribute="bottom" secondItem="V2n-ww-Frt" secondAttribute="bottom" id="cvl-7U-ju7"/>
                         <constraint firstAttribute="trailing" secondItem="9V3-pA-uBx" secondAttribute="trailing" id="jzY-gO-m6E"/>
+                        <constraint firstItem="n1H-ZV-4y5" firstAttribute="width" secondItem="NVe-2q-wg3" secondAttribute="width" id="tj9-g0-YhD"/>
+                        <constraint firstItem="n1H-ZV-4y5" firstAttribute="centerX" secondItem="NVe-2q-wg3" secondAttribute="centerX" id="tv7-QS-fJQ"/>
                     </constraints>
                 </view>
             </subviews>
