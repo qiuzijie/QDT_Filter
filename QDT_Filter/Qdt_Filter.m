@@ -24,6 +24,9 @@
 @property (weak, nonatomic) IBOutlet UITableView *rightTableView;
 @property (weak, nonatomic) IBOutlet UIView *bottomView;
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *collectionViewTopConstraint;
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *filterHeightConstraint;
+@property (strong, nonatomic) IBOutlet UIView *filterView;
+@property (nonatomic, assign) BOOL fliterHasHidden;
 
 @property (nonatomic, strong) QdtFilterBaseModel *selectedSingleModel;
 @property (nonatomic, strong) NSIndexPath *leftSelectingIndexPath;
@@ -51,16 +54,35 @@
     layout.sectionInset = UIEdgeInsetsMake(0, 8, 0, 8);
     [self.collectionView setCollectionViewLayout:layout];
     [self.collectionView registerClass:[QdtFilterCollectionCell class] forCellWithReuseIdentifier:FilterCollectionCellIdentifier];
-    
 }
 
-- (void)setCategorys:(NSArray<QdtFilterCategory *> *)categorys{
-    _categorys = categorys;
+- (instancetype)initFilterWithCategorys:(NSArray<QdtFilterCategory *> *)categorys filterFrame:(CGRect)frame
+{
+    self = [super init];
+    if (self) {
+        self.categorys = categorys;
+        self.filterFrame = frame;
+        [self initViews];
+    }
+    return self;
+}
+
+- (void)initViews{
     [self.leftTableView reloadData];
     [self.leftTableView selectRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0] animated:NO scrollPosition:UITableViewScrollPositionNone];
     self.leftSelectingIndexPath = [NSIndexPath indexPathForRow:0 inSection:0];
     [self.rightTableView reloadData];
+    self.filterHeightConstraint.constant = self.filterFrame.size.height;
+    self.view.frame = CGRectZero;
 }
+
+//- (void)setCategorys:(NSArray<QdtFilterCategory *> *)categorys{
+//    _categorys = categorys;
+//    [self.leftTableView reloadData];
+//    [self.leftTableView selectRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0] animated:NO scrollPosition:UITableViewScrollPositionNone];
+//    self.leftSelectingIndexPath = [NSIndexPath indexPathForRow:0 inSection:0];
+//    [self.rightTableView reloadData];
+//}
 
 #pragma mark- tableview Delegate
 
@@ -216,7 +238,7 @@
 -(UICollectionViewCell*)collectionView:(UICollectionView *)collectionView
                 cellForItemAtIndexPath:(NSIndexPath *)indexPath{
     QdtFilterCollectionCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:FilterCollectionCellIdentifier forIndexPath:indexPath];
-
+    cell.grayStyle = self.fliterHasHidden;
     cell.collectModel = self.collects[indexPath.row];
     return cell;
 }
@@ -237,7 +259,33 @@
     
 }
 
-#pragma mark- function
+#pragma mark - event
+
+- (IBAction)resetting:(UIButton *)sender {
+    
+    for (QdtFilterCategory *category in self.categorys) {
+        category.mainCategory.selected = NO;
+        for (QdtFilterBaseModel *m in category.secondaryCategorys) {
+            m.selected = NO;
+        }
+    }
+    [self.collects removeAllObjects];
+    self.leftSelectingIndexPath = [NSIndexPath indexPathForRow:0 inSection:0];
+    [self reloadLeftTableView];
+    [self reloadCollectionView];
+    [self.rightTableView reloadData];
+}
+
+
+- (IBAction)confirm:(UIButton *)sender {
+    [self hiddenFilter];
+}
+
+- (IBAction)tapBlackMaskView:(UIButton *)sender {
+    [self hiddenFilter];
+}
+
+#pragma mark- function-private
 - (void)reloadCollectionView{
     //判断是否显示collectionView
     NSInteger constant = 0;
@@ -274,6 +322,27 @@
     return NO;
 }
 
+#pragma mark- function-public
+
+- (void)showFilterCompletion:(QdtFilterCompletionBlock)completion{
+    self.view.frame = CGRectMake(self.filterFrame.origin.x, self.filterFrame.origin.y, self.filterFrame.size.width, self.view.superview.frame.size.height);
+    self.collectionView.allowsSelection = YES;
+    self.completionBlcok = completion;
+    self.fliterHasHidden = NO;
+    [self.collectionView reloadData];
+}
+
+- (void)hiddenFilter{
+    if (self.collects.count > 0) {
+        self.view.frame = CGRectMake(self.filterFrame.origin.x, self.filterFrame.origin.y, self.filterFrame.size.width, 60);
+    } else{
+        self.view.frame = CGRectZero;
+    }
+    self.collectionView.allowsSelection = NO;
+    self.fliterHasHidden = YES;
+    [self.collectionView reloadData];
+    self.completionBlcok(self.collects);
+}
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];

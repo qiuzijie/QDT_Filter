@@ -30,21 +30,38 @@
     self.contentLabel = [UILabel new];
     [self addSubview:self.contentLabel];
     
+    
     self.titleLabel.textAlignment = NSTextAlignmentCenter;
     self.titleLabel.font = [UIFont systemFontOfSize:17];
-    self.titleLabel.textColor = [UIColor colorWithRed:12 / 255.0 green:172 / 255.0 blue:199 / 255.0 alpha:1.0];
-    
     self.contentLabel.textAlignment = NSTextAlignmentCenter;
     self.contentLabel.font = [UIFont systemFontOfSize:15];
-    self.contentLabel.textColor = [UIColor grayColor];
-    
-    self.backgroundColor = [UIColor colorWithRed:206/255.0
-                                         green:242/255.0
-                                          blue:238/255.0
-                                         alpha:1];
     
     self.layer.cornerRadius = 5.0;
 
+}
+
+- (void)setGrayStyle:(BOOL)grayStyle{
+    _grayStyle = grayStyle;
+    if (self.grayStyle) {
+        
+        self.titleLabel.textColor = [UIColor grayColor];
+        
+        self.contentLabel.textColor = [UIColor grayColor];
+        
+        self.backgroundColor = [UIColor colorWithRed:235/255.0
+                                               green:235/255.0
+                                                blue:235/255.0
+                                               alpha:1];;
+    } else{
+        self.titleLabel.textColor = [UIColor colorWithRed:12 / 255.0 green:172 / 255.0 blue:199 / 255.0 alpha:1.0];
+        
+        self.contentLabel.textColor = [UIColor grayColor];
+        
+        self.backgroundColor = [UIColor colorWithRed:206/255.0
+                                               green:242/255.0
+                                                blue:238/255.0
+                                               alpha:1];;
+    }
 }
 
 - (void)layoutSubviews{

@@ -11,4 +11,5 @@
 
 @interface QdtFilterCollectionCell : UICollectionViewCell
 @property (nonatomic, strong) QdtFilterCollectionModel *collectModel;
+@property (nonatomic, assign) BOOL grayStyle;
 @end

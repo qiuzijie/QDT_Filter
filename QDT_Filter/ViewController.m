@@ -8,7 +8,6 @@
 
 #import "ViewController.h"
 #import "Qdt_Filter.h"
-#import "Masonry.h"
 
 @interface ViewController ()
 @property (nonatomic, copy) NSArray *category;
@@ -20,10 +19,8 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.category = [self creatDatas];
-    self.filter = [Qdt_Filter new];
-    self.filter.view.frame = CGRectMake(0, 24, CGRectGetWidth(self.view.frame), CGRectGetHeight(self.view.frame)/2);
+    self.filter = [[Qdt_Filter alloc] initFilterWithCategorys:self.category filterFrame:CGRectMake(0, 24, CGRectGetWidth(self.view.frame), CGRectGetHeight(self.view.frame)/2)];
     [self.view addSubview:self.filter.view];
-    self.filter.categorys = self.category;
 }
 
 
@@ -52,6 +49,9 @@
 }
 
 - (IBAction)action:(UIButton *)sender {
+    [self.filter showFilterCompletion:^(NSMutableArray<QdtFilterCollectionModel *> *collects) {
+        ;
+    }];
 }
 
 - (void)didReceiveMemoryWarning {

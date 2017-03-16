@@ -11,7 +11,13 @@
 #import "QdtFilterCollectionCell.h"
 #import "QdtFilterCollectionModel.h"
 
+
+typedef void (^QdtFilterCompletionBlock)(NSMutableArray<QdtFilterCollectionModel *> *collects);
 @interface Qdt_Filter : UIViewController
 @property (nonatomic, copy) NSArray<QdtFilterCategory *> *categorys;
 @property (nonatomic, strong) NSMutableArray<QdtFilterCollectionModel *> *collects;
+@property (nonatomic, assign) CGRect filterFrame;
+@property (nonatomic, strong) QdtFilterCompletionBlock completionBlcok;
+- (void)showFilterCompletion:(QdtFilterCompletionBlock)completion;
+- (instancetype)initFilterWithCategorys:(NSArray<QdtFilterCategory *> *)categorys filterFrame:(CGRect)frame;
 @end
